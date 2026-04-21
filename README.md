@@ -41,8 +41,11 @@ You will also need an OpenAI API key set as an environment variable `OPENAI_API_
 To install locally:
 
 ```bash
+# clones all documents and folders
 git clone https://github.com/RichardFreedman/LLM_Class_Projects.git
+# now cd to the concert programs
 cd LLM_Class_Projects/B_Concert_Programs_LLM/
+# and pull the large chroma db
 git lfs pull
 ```
 
