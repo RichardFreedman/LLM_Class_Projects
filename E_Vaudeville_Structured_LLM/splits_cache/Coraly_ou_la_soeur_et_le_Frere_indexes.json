@@ -1,0 +1,104 @@
+{
+  "all_scenes": [
+    {
+      "act": 1,
+      "scene": 1,
+      "header": "SCÈNE PREMIÈRE ."
+    },
+    {
+      "act": 1,
+      "scene": 2,
+      "header": "SCÈNE 11 ."
+    },
+    {
+      "act": 1,
+      "scene": 3,
+      "header": "SCÈNE III ."
+    },
+    {
+      "act": 1,
+      "scene": 4,
+      "header": "SCÈNE IV ."
+    },
+    {
+      "act": 1,
+      "scene": 5,
+      "header": "SCÈNE V."
+    },
+    {
+      "act": 1,
+      "scene": 6,
+      "header": "SCÈNE VI ."
+    },
+    {
+      "act": 1,
+      "scene": 7,
+      "header": "SCÈNE VII ."
+    },
+    {
+      "act": 1,
+      "scene": 8,
+      "header": "SCÈNE VIII ."
+    },
+    {
+      "act": 1,
+      "scene": 9,
+      "header": "SCÈNE IX ."
+    },
+    {
+      "act": 1,
+      "scene": 10,
+      "header": "SCÈNE X."
+    },
+    {
+      "act": 1,
+      "scene": 11,
+      "header": "SCÈNE XI ."
+    },
+    {
+      "act": 1,
+      "scene": 12,
+      "header": "SCÈNE XII ."
+    },
+    {
+      "act": 1,
+      "scene": 13,
+      "header": "SCÈNE XIII ."
+    },
+    {
+      "act": 1,
+      "scene": 14,
+      "header": "SCÈNE XIV ."
+    },
+    {
+      "act": 1,
+      "scene": 15,
+      "header": "SCÈNE XV ."
+    },
+    {
+      "act": 1,
+      "scene": 16,
+      "header": "SCÈNE XVI ."
+    },
+    {
+      "act": 1,
+      "scene": 17,
+      "header": "SCÈNE XVII ."
+    },
+    {
+      "act": 1,
+      "scene": 18,
+      "header": "SCÈNE XVIII ."
+    },
+    {
+      "act": 1,
+      "scene": 19,
+      "header": "SCÈNE XIX ."
+    },
+    {
+      "act": 1,
+      "scene": 20,
+      "header": "SCÈNE XX ET DERNIÈRE ."
+    }
+  ]
+}
