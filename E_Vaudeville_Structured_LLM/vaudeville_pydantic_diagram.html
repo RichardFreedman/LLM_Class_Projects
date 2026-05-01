@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangChain + Pydantic - Vaudeville Structured Output</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #faf7f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #f5f2ef;
+            --text-primary: #1a1a1a;
+            --text-secondary: #5c5c5c;
+            --accent-blue: #2563eb;
+            --accent-green: #059669;
+            --accent-orange: #d97706;
+            --accent-purple: #7c3aed;
+            --accent-red: #dc2626;
+            --accent-teal: #0d9488;
+            --border: #e5e2de;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 40px;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 36px;
+        }
+        
+        .diagram-shell {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        
+        .mermaid-wrap {
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .mermaid {
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .step-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .step-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+        
+        .step-card:nth-child(1) .step-number { background: rgba(37, 99, 235, 0.15); color: var(--accent-blue); }
+        .step-card:nth-child(2) .step-number { background: rgba(220, 38, 38, 0.15); color: var(--accent-red); }
+        .step-card:nth-child(3) .step-number { background: rgba(124, 58, 237, 0.15); color: var(--accent-purple); }
+        .step-card:nth-child(4) .step-number { background: rgba(5, 150, 105, 0.15); color: var(--accent-green); }
+        
+        .step-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        
+        .step-desc {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background: var(--bg-primary);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            color: var(--text-primary);
+            overflow-x: auto;
+            border: 1px solid var(--border);
+        }
+        
+        .code-keyword { color: var(--accent-purple); }
+        .code-string { color: var(--accent-green); }
+        .code-comment { color: var(--text-secondary); }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+        }
+        
+        /* Pydantic section */
+        .pydantic-section {
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 2px dashed var(--border);
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--accent-teal);
+        }
+        
+        .pydantic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        
+        .pydantic-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--accent-teal);
+        }
+        
+        .class-name {
+            font-family: 'Fira Code', monospace;
+            font-weight: 600;
+            color: var(--accent-teal);
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+        }
+        
+        .field-list {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        .field-list code {
+            background: #f0fdfa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--accent-teal);
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .note-box {
+            background: #f0fdfa;
+            border: 1px solid #99f6e4;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 24px;
+            font-size: 0.9rem;
+            color: #134e4a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LangChain + Pydantic</h1>
+        <p class="subtitle">Structured Output for Vaudeville Analysis</p>
+        
+        <!-- Row 1: Basic LangChain -->
+        <div class="diagram-shell">
+            <div class="mermaid-wrap">
+                <div class="mermaid">
+                    %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#2563eb', 'primaryTextColor': '#fff', 'primaryBorderColor': '#2563eb', 'lineColor': '#9ca3af', 'secondaryColor': '#059669', 'tertiaryColor': '#f5f2ef', 'background': '#ffffff', 'mainBkg': '#f5f2ef', 'nodeBorder': '#e5e2de', 'clusterBkg': '#f5f2ef', 'clusterBorder': '#e5e2de', 'titleColor': '#1a1a1a', 'edgeLabelBackground': '#ffffff'}}}%%
+                    flowchart TD
+                        subgraph API["1. API Management"]
+                            A["🔑 Set API Key<br/>getpass.getpass()"]
+                        end
+                        
+                        subgraph MODEL["2. Model Selection"]
+                            B["🤖 Select Model<br/>init_chat_model"]
+                        end
+                        
+                        subgraph PROMPT["3. Prompts"]
+                            C["📝 System + User Prompts<br/>ChatPromptTemplate"]
+                        end
+                        
+                        subgraph RESULT["4. Results"]
+                            D["📤 Structured Output<br/>with_structured_output"]
+                        end
+                        
+                        A --> B
+                        B --> C
+                        C --> D
+                        
+                        style API fill:#ffffff,stroke:#dc2626,stroke-width:2px
+                        style MODEL fill:#ffffff,stroke:#2563eb,stroke-width:2px
+                        style PROMPT fill:#ffffff,stroke:#7c3aed,stroke-width:2px
+                        style RESULT fill:#ffffff,stroke:#059669,stroke-width:2px
+                        
+                        style A fill:#fef2f2,stroke:#dc2626
+                        style B fill:#eff6ff,stroke:#2563eb
+                        style C fill:#f5f3ff,stroke:#7c3aed
+                        style D fill:#f0fdf4,stroke:#059669
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #dc2626;"></div>
+                    <span>API Key</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #2563eb;"></div>
+                    <span>Model</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #7c3aed;"></div>
+                    <span>Prompts</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #059669;"></div>
+                    <span>Output</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Row 1 cards -->
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <div class="step-title">API Management</div>
+                <div class="step-desc">Securely set your OpenAI API key using environment variables.</div>
+                <div class="code-block">os.environ["OPENAI_API_KEY"] = getpass.getpass()</div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <div class="step-title">Model Selection</div>
+                <div class="step-desc">Choose which LLM to use (gpt-5, gpt-4o-mini, etc.)</div>
+                <div class="code-block">llm = init_chat_model("gpt-5", model_provider="openai")</div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <div class="step-title">System + User Prompts</div>
+                <div class="step-desc">Define the LLM's role and provide context for analysis.</div>
+                <div class="code-block">ChatPromptTemplate.from_messages([<br>&nbsp;&nbsp;("system", ...), ("human", ...)<br>])</div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">4</div>
+                <div class="step-title">Structured Output</div>
+                <div class="step-desc">Use Pydantic to define exact output structure.</div>
+                <div class="code-block">llm.with_structured_output(SchemaClass)</div>
+            </div>
+        </div>
+        
+        <!-- Row 2: Pydantic Section -->
+        <div class="pydantic-section">
+            <h2 class="section-title">🔧 Pydantic: Defining Output Structure</h2>
+            
+            <div class="diagram-shell">
+                <div class="mermaid-wrap">
+                    <div class="mermaid">
+                        %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#0d9488', 'primaryTextColor': '#fff', 'primaryBorderColor': '#0d9488', 'lineColor': '#9ca3af', 'secondaryColor': '#0d9488', 'tertiaryColor': '#f0fdfa', 'background': '#ffffff', 'mainBkg': '#f0fdfa', 'nodeBorder': '#99f6e4', 'clusterBkg': '#f0fdfa', 'clusterBorder': '#99f6e4', 'titleColor': '#1a1a1a', 'edgeLabelBackground': '#ffffff'}}}%%
+                        flowchart TD
+                            P["📋 Pydantic Schema<br/>BaseModel classes"] --> Q["🔗 with_structured_output<br/>Bind to LLM"]
+                            Q --> R["📥 Input: Text/PDF<br/>Play content"]
+                            R --> S["🤖 LLM Processing<br/>gpt-5"]
+                            S --> T["📤 Structured Output<br/>Pydantic objects"]
+                            
+                            style P fill:#f0fdfa,stroke:#0d9488
+                            style Q fill:#f0fdfa,stroke:#0d9488
+                            style R fill:#f0fdfa,stroke:#0d9488
+                            style S fill:#ccfbf1,stroke:#0d9488
+                            style T fill:#ccfbf1,stroke:#0d9488
+                    </div>
+                </div>
+            </div>
+            
+            <div class="pydantic-grid">
+                <div class="pydantic-card">
+                    <div class="class-name">class Scene(BaseModel)</div>
+                    <div class="field-list">
+                        Used to split PDF into scenes:<br>
+                        <code>act</code> · <code>scene</code> · <code>header</code>
+                    </div>
+                </div>
+                
+                <div class="pydantic-card">
+                    <div class="class-name">class MusicalMoment(BaseModel)</div>
+                    <div class="field-list">
+                        Extract musical data from each scene:<br>
+                        <code>act</code> · <code>scene</code> · <code>number</code> · <code>characters</code> · <code>dramatic_situation</code> · <code>air_or_melodie</code> · <code>poetic_text</code> · <code>rhyme_scheme</code> · <code>stage_direction_or_cues</code>
+                    </div>
+                </div>
+                
+                <div class="pydantic-card">
+                    <div class="class-name">class VaudevillePlay(BaseModel)</div>
+                    <div class="field-list">
+                        Container for all musical moments:<br>
+                        <code>musicalMoments: List[MusicalMoment]</code>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sample Field prompts -->
+            <div class="pydantic-section" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
+                <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; color: var(--accent-teal);">📝 Sample Pydantic Field Descriptions (Prompts to the LLM)</h3>
+                
+                <div class="steps-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+                    <div class="step-card">
+                        <div class="step-title">characters</div>
+                        <div class="step-desc" style="font-style: italic; color: var(--text-secondary); margin-bottom: 8px;">"the character or characters who are singing (or otherwise making music) within this specific musical moment"</div>
+                        <div class="code-block" style="font-size: 0.7rem;">list[str] = Field(description="the character or characters who are singing...")</div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-title">poetic_text</div>
+                        <div class="step-desc" style="font-style: italic; color: var(--text-secondary); margin-bottom: 8px;">"The text from the music number. Do not include stage directions, only the lyrics sung by the characters in this musical moment. Note that sometimes the text of a given number will be sung by different characters. Tell us which character sings which lines, but do not include the names of the characters in the transcribed poetry itself."</div>
+                        <div class="code-block" style="font-size: 0.7rem;">str = Field(description="The text from the music number...")</div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-title">rhyme_scheme</div>
+                        <div class="step-desc" style="font-style: italic; color: var(--text-secondary); margin-bottom: 8px;">"The rhyme scheme for the poetic text in the musical moment. For example, sentences that end in 'tree' 'be' 'why' and 'high' would have a rhyme scheme of AABB. If there are multiple parts with different rhyme schemes, please indicate which part has which scheme."</div>
+                        <div class="code-block" style="font-size: 0.7rem;">str = Field(description="The rhyme scheme for the poetic text...")</div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-title">air_or_melodie</div>
+                        <div class="step-desc" style="font-style: italic; color: var(--text-secondary); margin-bottom: 8px;">"The title of the 'air' or 'melodie' of which the musical moment is based. It will be labeled in the text as 'air' or 'melodie'."</div>
+                        <div class="code-block" style="font-size: 0.7rem;">str = Field(description="The title of the 'air' or 'melodie'...")</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="note-box">
+                <strong>💡 Key Concept:</strong> Pydantic allows you to define exactly what fields the LLM should return, with descriptions that guide the model. The <code>Field(description="...")</code> parameter provides instructions to the LLM for each field.
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>

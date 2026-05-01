@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangChain Basics - Model, API, Prompts</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #faf7f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #f5f2ef;
+            --text-primary: #1a1a1a;
+            --text-secondary: #5c5c5c;
+            --accent-blue: #2563eb;
+            --accent-green: #059669;
+            --accent-orange: #d97706;
+            --accent-purple: #7c3aed;
+            --accent-red: #dc2626;
+            --border: #e5e2de;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 40px;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 36px;
+        }
+        
+        .diagram-shell {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--border);
+            margin-bottom: 36px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        
+        .mermaid-wrap {
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .mermaid {
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+        }
+        
+        .step-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .step-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+        
+        .step-card:nth-child(1) .step-number { background: rgba(37, 99, 235, 0.15); color: var(--accent-blue); }
+        .step-card:nth-child(2) .step-number { background: rgba(220, 38, 38, 0.15); color: var(--accent-red); }
+        .step-card:nth-child(3) .step-number { background: rgba(124, 58, 237, 0.15); color: var(--accent-purple); }
+        .step-card:nth-child(4) .step-number { background: rgba(5, 150, 105, 0.15); color: var(--accent-green); }
+        
+        .step-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        
+        .step-desc {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background: var(--bg-primary);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            color: var(--text-primary);
+            overflow-x: auto;
+            border: 1px solid var(--border);
+        }
+        
+        .code-keyword { color: var(--accent-purple); }
+        .code-string { color: var(--accent-green); }
+        .code-comment { color: var(--text-secondary); }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+        }
+        
+        .note-box {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 24px;
+            font-size: 0.9rem;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LangChain Basics</h1>
+        <p class="subtitle">Model Selection → API Management → Prompts → Results</p>
+        
+        <div class="diagram-shell">
+            <div class="mermaid-wrap">
+                <div class="mermaid">
+                    %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#2563eb', 'primaryTextColor': '#fff', 'primaryBorderColor': '#2563eb', 'lineColor': '#9ca3af', 'secondaryColor': '#059669', 'tertiaryColor': '#f5f2ef', 'background': '#ffffff', 'mainBkg': '#f5f2ef', 'nodeBorder': '#e5e2de', 'clusterBkg': '#f5f2ef', 'clusterBorder': '#e5e2de', 'titleColor': '#1a1a1a', 'edgeLabelBackground': '#ffffff'}}}%%
+                    flowchart TD
+                        subgraph API["1. API Management"]
+                            A["🔑 Set API Key<br/>getpass.getpass()"]
+                        end
+                        
+                        subgraph MODEL["2. Model Selection"]
+                            B["🤖 Select Model<br/>init_chat_model"]
+                        end
+                        
+                        subgraph PROMPT["3. Prompts"]
+                            C["📝 System Prompt<br/>Role definition"]
+                            D["❓ User Prompt<br/>User question"]
+                        end
+                        
+                        subgraph RESULT["4. Results"]
+                            E["📤 Response<br/>llm.invoke()"]
+                        end
+                        
+                        A --> B
+                        B --> C
+                        C --> D
+                        D --> E
+                        
+                        style API fill:#ffffff,stroke:#dc2626,stroke-width:2px
+                        style MODEL fill:#ffffff,stroke:#2563eb,stroke-width:2px
+                        style PROMPT fill:#ffffff,stroke:#7c3aed,stroke-width:2px
+                        style RESULT fill:#ffffff,stroke:#059669,stroke-width:2px
+                        
+                        style A fill:#fef2f2,stroke:#dc2626
+                        style B fill:#eff6ff,stroke:#2563eb
+                        style C fill:#f5f3ff,stroke:#7c3aed
+                        style D fill:#f0fdf4,stroke:#059669
+                        style E fill:#f0fdf4,stroke:#059669
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #dc2626;"></div>
+                    <span>API Key</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #2563eb;"></div>
+                    <span>Model</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #7c3aed;"></div>
+                    <span>Prompts</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #059669;"></div>
+                    <span>Output</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <div class="step-title">API Management</div>
+                <div class="step-desc">Securely set your OpenAI API key using environment variables. Never paste the key directly in code.</div>
+                <div class="code-block"><span class="code-keyword">import</span> getpass, os<br><span class="code-keyword">if not</span> os.environ.get(<span class="code-string">"OPENAI_API_KEY"</span>):<br>&nbsp;&nbsp;os.environ[<span class="code-string">"OPENAI_API_KEY"</span>] = getpass.getpass()</div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <div class="step-title">Model Selection</div>
+                <div class="step-desc">Choose which LLM to use. We use gpt-4o-mini for its balance of capability and low cost.</div>
+                <div class="code-block"><span class="code-keyword">from</span> langchain.chat_models <span class="code-keyword">import</span> init_chat_model<br><br>llm = init_chat_model(<span class="code-string">"gpt-4o-mini"</span>, model_provider=<span class="code-string">"openai"</span>)</div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <div class="step-title">System + User Prompts</div>
+                <div class="step-desc">Define the LLM's role with a system prompt, then combine with user question using ChatPromptTemplate.</div>
+                <div class="code-block">prompt = ChatPromptTemplate.from_messages([<br>&nbsp;&nbsp;(<span class="code-string">"system"</span>, <span class="code-string">"You are a pirate..."</span>),<br>&nbsp;&nbsp;(<span class="code-string">"human"</span>, <span class="code-string">"{question}"</span>)<br>])</div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">4</div>
+                <div class="step-title">Return Results</div>
+                <div class="step-desc">Invoke the model with your prompt and get the response content back.</div>
+                <div class="code-block"><span class="code-keyword">def</span> ask_llm(question):<br>&nbsp;&nbsp;message = prompt.invoke({<span class="code-string">"question"</span>: question})<br>&nbsp;&nbsp;response = llm.invoke(message)<br>&nbsp;&nbsp;<span class="code-keyword">return</span> response.content</div>
+            </div>
+        </div>
+        
+        <div class="note-box">
+            <strong>💡 Key Concept:</strong> The system prompt defines the LLM's "personality" or role, while the user prompt is the actual question. This separation allows you to create custom chat models for different purposes.
+        </div>
+    </div>
+    
+    <script>
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>

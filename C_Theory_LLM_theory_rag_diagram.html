@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Theory RAG - Metadata Filters & Structured Output</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #faf7f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #f5f2ef;
+            --text-primary: #1a1a1a;
+            --text-secondary: #5c5c5c;
+            --accent-blue: #2563eb;
+            --accent-green: #059669;
+            --accent-orange: #d97706;
+            --accent-purple: #7c3aed;
+            --accent-red: #dc2626;
+            --accent-teal: #0d9488;
+            --border: #e5e2de;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 40px;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 36px;
+        }
+        
+        .diagram-shell {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        
+        .mermaid-wrap {
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .mermaid {
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .step-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .step-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+        
+        .step-card:nth-child(1) .step-number { background: rgba(37, 99, 235, 0.15); color: var(--accent-blue); }
+        .step-card:nth-child(2) .step-number { background: rgba(220, 38, 38, 0.15); color: var(--accent-red); }
+        .step-card:nth-child(3) .step-number { background: rgba(124, 58, 237, 0.15); color: var(--accent-purple); }
+        .step-card:nth-child(4) .step-number { background: rgba(5, 150, 105, 0.15); color: var(--accent-green); }
+        
+        .step-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        
+        .step-desc {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background: var(--bg-primary);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            color: var(--text-primary);
+            overflow-x: auto;
+            border: 1px solid var(--border);
+        }
+        
+        .code-keyword { color: var(--accent-purple); }
+        .code-string { color: var(--accent-green); }
+        .code-comment { color: var(--text-secondary); }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+        }
+        
+        /* Metadata section */
+        .metadata-section {
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 2px dashed var(--border);
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--accent-orange);
+        }
+        
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        
+        .filter-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--accent-orange);
+        }
+        
+        .filter-title {
+            font-weight: 600;
+            color: var(--accent-orange);
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+        
+        .filter-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        
+        /* Output section */
+        .output-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 2px dashed var(--border);
+        }
+        
+        .output-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--accent-green);
+        }
+        
+        .output-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+        }
+        
+        .output-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+        
+        .output-card h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--accent-green);
+        }
+        
+        .note-box {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 24px;
+            font-size: 0.9rem;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Music Theory RAG</h1>
+        <p class="subtitle">Metadata Filters & Structured Output — TME English Sources</p>
+        
+        <!-- Main Flow -->
+        <div class="diagram-shell">
+            <div class="mermaid-wrap">
+                <div class="mermaid">
+                    %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#2563eb', 'primaryTextColor': '#fff', 'primaryBorderColor': '#2563eb', 'lineColor': '#9ca3af', 'secondaryColor': '#059669', 'tertiaryColor': '#f5f2ef', 'background': '#ffffff', 'mainBkg': '#f5f2ef', 'nodeBorder': '#e5e2de', 'clusterBkg': '#f5f2ef', 'clusterBorder': '#e5e2de', 'titleColor': '#1a1a1a', 'edgeLabelBackground': '#ffffff'}}}%%
+                    flowchart TD
+                        Q["❓ User Query<br/>Question about music theory"] --> R["🔍 Retrieve<br/>k segments"]
+                        R --> DF["📅 Date Filter<br/>century range"]
+                        DF --> AF["👤 Author Filter<br/>selected authors"]
+                        AF --> G["📝 Generate<br/>LLM with context"]
+                        G --> O["📤 Output<br/>Summary + Sources"]
+                        
+                        style Q fill:#eff6ff,stroke:#2563eb
+                        style R fill:#eff6ff,stroke:#2563eb
+                        style DF fill:#fef3c7,stroke:#d97706
+                        style AF fill:#fef3c7,stroke:#d97706
+                        style G fill:#f5f3ff,stroke:#7c3aed
+                        style O fill:#f0fdf4,stroke:#059669
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #2563eb;"></div>
+                    <span>Query & Retrieve</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #d97706;"></div>
+                    <span>Metadata Filters</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #7c3aed;"></div>
+                    <span>Generation</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #059669;"></div>
+                    <span>Output</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Row 1 cards -->
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <div class="step-title">User Query</div>
+                <div class="step-desc">Ask questions about historical music theory from TME database.</div>
+                <div class="code-block">user_query = "What are the key elements of good music?"</div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <div class="step-title">Retrieve</div>
+                <div class="step-desc">Get k most similar text segments using cosine similarity on embeddings.</div>
+                <div class="code-block">retriever.invoke(question)  # k=10</div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <div class="step-title">Generate</div>
+                <div class="step-desc">LLM generates answer grounded in retrieved context passages.</div>
+                <div class="code-block">llm.invoke(prompt_template.invoke({context, question}))</div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">4</div>
+                <div class="step-title">Output</div>
+                <div class="step-desc">Returns summary with Source numbers, author names, and quotations.</div>
+                <div class="code-block">result = {"answer": ..., "context": [...]}</div>
+            </div>
+        </div>
+        
+        <!-- Metadata Filters Section -->
+        <div class="metadata-section">
+            <h2 class="section-title">🔧 Metadata Filters: Language, Century, Author</h2>
+            
+            <div class="diagram-shell">
+                <div class="mermaid-wrap">
+                    <div class="mermaid">
+                        %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#d97706', 'primaryTextColor': '#fff', 'primaryBorderColor': '#d97706', 'lineColor': '#9ca3af', 'secondaryColor': '#d97706', 'tertiaryColor': '#fef3c7', 'background': '#ffffff', 'mainBkg': '#fef3c7', 'nodeBorder': '#fcd34d', 'clusterBkg': '#fef3c7', 'clusterBorder': '#fcd34d', 'titleColor': '#1a1a1a', 'edgeLabelBackground': '#ffffff'}}}%%
+                        flowchart TD
+                            DB[("📚 Chroma DB<br/>TME English Sources")] --> DF["📅 Date Range<br/>e.g. (1500, 1700)"]
+                            DB --> AF["👤 Author Filter<br/>e.g. [Morley, Bevin]"]
+                            DB --> LF["🌐 Language Filter<br/>English sources"]
+                            
+                            DF --> RF[("🔎 Filtered<br/>Retriever")]
+                            AF --> RF
+                            LF --> RF
+                            
+                            style DB fill:#ffffff,stroke:#d97706
+                            style DF fill:#fef3c7,stroke:#d97706
+                            style AF fill:#fef3c7,stroke:#d97706
+                            style LF fill:#fef3c7,stroke:#d97706
+                            style RF fill:#f0fdf4,stroke:#059669
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-grid">
+                <div class="filter-card">
+                    <div class="filter-title">📅 Date/Century Filter</div>
+                    <div class="filter-desc">Filter by date range to focus on specific centuries (e.g., 1500-1600 for Renaissance, 1600-1700 for Baroque).</div>
+                    <div class="code-block" style="font-size: 0.75rem;"># Filter to Renaissance period<br>selected_date_range = (1500, 1600)</div>
+                </div>
+                
+                <div class="filter-card">
+                    <div class="filter-title">👤 Author Filter</div>
+                    <div class="filter-desc">Filter to specific theorists (e.g., Thomas Morley, Elway Bevin) to get focused responses.</div>
+                    <div class="code-block" style="font-size: 0.75rem;"># Filter to specific authors<br>selected_authors = ["Thomas Morley", "Elway Bevin"]</div>
+                </div>
+                
+                <div class="filter-card">
+                    <div class="filter-title">🌐 Language Filter</div>
+                    <div class="filter-desc">Database contains English sources from the Thesaurus Musicarum (TME). Language is pre-selected.</div>
+                    <div class="code-block" style="font-size: 0.75rem;"># Database: TME English<br>COLLECTION_NAME = "tme_english"</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Output Section -->
+        <div class="output-section">
+            <h2 class="output-title">📤 Structured Output: Summary + Sample Documents</h2>
+            
+            <div class="output-grid">
+                <div class="output-card">
+                    <h4>1. Summary Answer</h4>
+                    <div class="step-desc">Concise answer (max 3 sentences) with references to Source numbers and author names.</div>
+                    <div class="code-block" style="font-size: 0.7rem; margin-top: 8px;">"According to Source 1 (Morley), good music requires..."</div>
+                </div>
+                
+                <div class="output-card">
+                    <h4>2. Source Grouping by Author</h4>
+                    <div class="step-desc">Results grouped by author for easy reading, with each group showing Source numbers, titles, dates, and page ranges.</div>
+                    <div class="code-block" style="font-size: 0.7rem; margin-top: 8px;">=== Thomas Morley ===<br>[Source 1] 'A Plain and Easy...' (1601), pp. 45-47</div>
+                </div>
+                
+                <div class="output-card">
+                    <h4>3. Sample Document Content</h4>
+                    <div class="step-desc">Full text segments from retrieved documents showing the actual passages cited.</div>
+                    <div class="code-block" style="font-size: 0.7rem; margin-top: 8px;">doc.page_content  # Full text of segment</div>
+                </div>
+                
+                <div class="output-card">
+                    <h4>4. Metadata for Verification</h4>
+                    <div class="step-desc">Each source includes metadata: author, title, date, page_range for fact-checking.</div>
+                    <div class="code-block" style="font-size: 0.7rem; margin-top: 8px;">doc.metadata = {author, title, date, page_range}</div>
+                </div>
+            </div>
+            
+            <div class="note-box">
+                <strong>💡 Key Concept:</strong> The Theory RAG uses metadata filters <em>after</em> retrieval to refine results. This allows flexible exploration — first get semantically similar passages, then filter by century or author to focus the answer.
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>

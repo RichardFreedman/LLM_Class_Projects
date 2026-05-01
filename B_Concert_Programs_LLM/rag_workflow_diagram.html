@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangChain RAG Workflow - Concert Programs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #faf7f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #f5f2ef;
+            --text-primary: #1a1a1a;
+            --text-secondary: #5c5c5c;
+            --accent-blue: #2563eb;
+            --accent-green: #059669;
+            --accent-orange: #d97706;
+            --accent-pink: #db2777;
+            --accent-purple: #7c3aed;
+            --border: #e5e2de;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 40px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+        
+        .diagram-shell {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--border);
+            margin-bottom: 40px;
+        }
+        
+        .mermaid-wrap {
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .mermaid {
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+        
+        .step-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .step-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+        
+        .step-card:nth-child(1) .step-number { background: rgba(37, 99, 235, 0.15); color: var(--accent-blue); }
+        .step-card:nth-child(2) .step-number { background: rgba(5, 150, 105, 0.15); color: var(--accent-green); }
+        .step-card:nth-child(3) .step-number { background: rgba(217, 119, 6, 0.15); color: var(--accent-orange); }
+        .step-card:nth-child(4) .step-number { background: rgba(219, 39, 119, 0.15); color: var(--accent-pink); }
+        
+        .step-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .step-desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .code-block {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            color: var(--accent-green);
+            overflow-x: auto;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LangChain RAG Workflow</h1>
+        <p class="subtitle">Concert Programs Database - Haverford College 2009-2022</p>
+        
+        <div class="diagram-shell">
+            <div class="mermaid-wrap">
+                <div class="mermaid">
+                    %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#2563eb', 'primaryTextColor': '#fff', 'primaryBorderColor': '#2563eb', 'lineColor': '#9ca3af', 'secondaryColor': '#059669', 'tertiaryColor': '#f5f2ef', 'background': '#ffffff', 'mainBkg': '#f5f2ef', 'nodeBorder': '#e5e2de', 'clusterBkg': '#f5f2ef', 'clusterBorder': '#e5e2de', 'titleColor': '#1a1a1a', 'edgeLabelBackground': '#ffffff'}}}%%
+                    flowchart TD
+                        subgraph INGESTION["1. DATABASE CREATION"]
+                            A["📄 Concert Program Data"] --> B["📦 Document Creation<br/>with Metadata"]
+                            B --> C["🔢 Embeddings Model<br/>text-embedding-3-large"]
+                            C --> D["💾 Chroma Vector Store<br/>Persisted Database"]
+                        end
+                        
+                        subgraph RETRIEVAL["2. RETRIEVAL SYSTEM"]
+                            E["❓ User Question"] --> F["🔍 Similarity Search<br/>k=10 results"]
+                            D --> F
+                        end
+                        
+                        subgraph PROMPT["3. PROMPT ENGINEERING"]
+                            F --> G["📋 Context Documents"]
+                            G --> H["✉️ System + User Prompts"]
+                        end
+                        
+                        subgraph GENERATION["4. GENERATION & OUTPUT"]
+                            H --> I["🤖 LLM<br/>gpt-4o-mini"]
+                            I --> J["✅ Generated Answer"]
+                        end
+                        
+                        style INGESTION fill:#ffffff,stroke:#2563eb,stroke-width:2px
+                        style RETRIEVAL fill:#ffffff,stroke:#059669,stroke-width:2px
+                        style PROMPT fill:#ffffff,stroke:#d97706,stroke-width:2px
+                        style GENERATION fill:#ffffff,stroke:#db2777,stroke-width:2px
+                        
+                        style A fill:#eff6ff,stroke:#2563eb
+                        style B fill:#eff6ff,stroke:#2563eb
+                        style C fill:#eff6ff,stroke:#2563eb
+                        style D fill:#f0fdf4,stroke:#059669
+                        style E fill:#fef3c7,stroke:#d97706
+                        style F fill:#f0fdf4,stroke:#059669
+                        style G fill:#fef3c7,stroke:#d97706
+                        style H fill:#fef3c7,stroke:#d97706
+                        style I fill:#fdf2f8,stroke:#db2777
+                        style J fill:#fdf2f8,stroke:#db2777
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #2563eb;"></div>
+                    <span>Ingestion (Data → Vector Store)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #059669;"></div>
+                    <span>Retrieval (Search)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #d97706;"></div>
+                    <span>Prompt Engineering</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #db2777;"></div>
+                    <span>Generation (LLM)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <div class="step-title">Database Creation</div>
+                <div class="step-desc">Concert program data is wrapped in Document objects with metadata (Year, Ensemble), then converted to embeddings and stored in Chroma.</div>
+                <div class="code-block">Document(page_content=..., metadata={Year, Ensemble})</div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <div class="step-title">Retrieval</div>
+                <div class="step-desc">User question is compared against vector store using similarity search to find top 10 most relevant documents.</div>
+                <div class="code-block">vector_store.similarity_search(question, k=10)</div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <div class="step-title">Prompt Engineering</div>
+                <div class="step-desc">System prompt instructs LLM to use only provided context. User prompt combines retrieved context with the question.</div>
+                <div class="code-block">prompt.invoke({context, question})</div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">4</div>
+                <div class="step-title">Generation & Output</div>
+                <div class="step-desc">LLM generates answer from context. Returns both the answer and source documents with metadata for verification.</div>
+                <div class="code-block">result = {"answer": ..., "context": [...]}</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>
